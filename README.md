@@ -194,6 +194,9 @@ include any file extension.
 **Note:** Multer will not append any file extension for you, your function
 should return a filename complete with an file extension.
 
+**Note:** Multer will not append any file extension for you, your function
+should return a filename complete with an file extension.
+
 Each function gets passed both the request (`req`) and some information about
 the file (`file`) to aid with the decision.
 
