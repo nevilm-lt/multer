@@ -183,6 +183,10 @@ files is used.
 `destination` as a function. When passing a string, multer will make sure that
 the directory is created for you.
 
+**Note:** You are responsible for creating the directory when providing
+`destination` as a function. When passing a string, multer will make sure that
+the directory is created for you.
+
 `filename` is used to determine what the file should be named inside the folder.
 If no `filename` is given, each file will be given a random name that doesn't
 include any file extension.
