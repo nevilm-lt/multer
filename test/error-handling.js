@@ -14,6 +14,23 @@ function withLimits (limits, fields) {
 }
 
 describe('Error Handling', function () {
+  it('should be an instance of both `Error` and `MulterError` classes in case of the Multer\'s error', function (done) {
+    var form = new FormData()
+    var storage = multer.diskStorage({ destination: os.tmpdir() })
+    var upload = multer({ storage: storage }).fields([
+      { name: 'small0', maxCount: 1 }
+    ])
+
+    form.append('small0', util.file('small0.dat'))
+    form.append('small0', util.file('small0.dat'))
+
+    util.submitForm(upload, form, function (err, req) {
+      assert.strictEqual(err instanceof Error, true)
+      assert.strictEqual(err instanceof multer.MulterError, true)
+      done()
+    })
+  })
+
   it('should respect parts limit', function (done) {
     var form = new FormData()
     var parser = withLimits({ parts: 1 }, [
@@ -24,7 +41,7 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_PART_COUNT')
+      assert.strictEqual(err.code, 'LIMIT_PART_COUNT')
       done()
     })
   })
@@ -40,8 +57,8 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FILE_SIZE')
-      assert.equal(err.field, 'small0')
+      assert.strictEqual(err.code, 'LIMIT_FILE_SIZE')
+      assert.strictEqual(err.field, 'small0')
       done()
     })
   })
@@ -57,7 +74,7 @@ describe('Error Handling', function () {
     form.append('small1', util.file('small1.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FILE_COUNT')
+      assert.strictEqual(err.code, 'LIMIT_FILE_COUNT')
       done()
     })
   })
@@ -71,7 +88,7 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FIELD_KEY')
+      assert.strictEqual(err.code, 'LIMIT_FIELD_KEY')
       done()
     })
   })
@@ -84,7 +101,7 @@ describe('Error Handling', function () {
     form.append('blowup', 'BOOM!')
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FIELD_KEY')
+      assert.strictEqual(err.code, 'LIMIT_FIELD_KEY')
       done()
     })
   })
@@ -97,8 +114,8 @@ describe('Error Handling', function () {
     form.append('field1', 'This will make the parser explode')
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FIELD_VALUE')
-      assert.equal(err.field, 'field1')
+      assert.strictEqual(err.code, 'LIMIT_FIELD_VALUE')
+      assert.strictEqual(err.field, 'field1')
       done()
     })
   })
@@ -111,7 +128,7 @@ describe('Error Handling', function () {
     form.append('field1', 'BOOM!')
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FIELD_COUNT')
+      assert.strictEqual(err.code, 'LIMIT_FIELD_COUNT')
       done()
     })
   })
@@ -125,8 +142,35 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_UNEXPECTED_FILE')
-      assert.equal(err.field, 'small0')
+      assert.strictEqual(err.code, 'LIMIT_UNEXPECTED_FILE')
+      assert.strictEqual(err.field, 'small0')
+      done()
+    })
+  })
+
+  it('should notify of missing field name', function (done) {
+    var req = new stream.PassThrough()
+    var storage = multer.memoryStorage()
+    var upload = multer({ storage: storage }).single('tiny0')
+    var boundary = 'AaB03x'
+    var body = [
+      '--' + boundary,
+      'Content-Disposition: form-data',
+      '',
+      'test content',
+      '--' + boundary,
+      ''
+    ].join('\r\n')
+
+    req.headers = {
+      'content-type': 'multipart/form-data; boundary=' + boundary,
+      'content-length': body.length
+    }
+
+    req.end(body)
+
+    upload(req, null, function (err) {
+      assert.strictEqual(err.code, 'MISSING_FIELD_NAME')
       done()
     })
   })
@@ -148,13 +192,13 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(parser, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_UNEXPECTED_FILE')
-      assert.equal(err.field, 'small0')
+      assert.strictEqual(err.code, 'LIMIT_UNEXPECTED_FILE')
+      assert.strictEqual(err.field, 'small0')
 
-      assert.equal(err.storageErrors.length, 1)
-      assert.equal(err.storageErrors[0].code, 'TEST')
-      assert.equal(err.storageErrors[0].field, 'tiny0')
-      assert.equal(err.storageErrors[0].file, req.file)
+      assert.strictEqual(err.storageErrors.length, 1)
+      assert.strictEqual(err.storageErrors[0].code, 'TEST')
+      assert.strictEqual(err.storageErrors[0].field, 'tiny0')
+      assert.strictEqual(err.storageErrors[0].file, req.file)
 
       done()
     })
@@ -174,7 +218,7 @@ describe('Error Handling', function () {
     req.end(body)
 
     upload(req, null, function (err) {
-      assert.equal(err.message, 'Multipart: Boundary not found')
+      assert.strictEqual(err.message, 'Multipart: Boundary not found')
       done()
     })
   })
@@ -200,7 +244,7 @@ describe('Error Handling', function () {
     req.end(body)
 
     upload(req, null, function (err) {
-      assert.equal(err.message, 'Unexpected end of multipart data')
+      assert.strictEqual(err.message, 'Unexpected end of multipart data')
       done()
     })
   })
@@ -216,7 +260,7 @@ describe('Error Handling', function () {
     form.append('small0', util.file('small0.dat'))
 
     util.submitForm(upload, form, function (err, req) {
-      assert.equal(err.code, 'LIMIT_FILE_SIZE')
+      assert.strictEqual(err.code, 'LIMIT_FILE_SIZE')
       done()
     })
   })
